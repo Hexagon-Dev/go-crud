@@ -47,7 +47,7 @@ func CreateProduct(db *sql.DB) func(w http.ResponseWriter, r *http.Request) any 
 		}
 
 		result, err := db.Exec(
-			"INSERT INTO products (name, has_fursuit, phone, species, date_of_birth) VALUES (?, ?, ?, ?, ?)",
+			"INSERT INTO products (name, is_available, bar_code, category, created_at) VALUES (?, ?, ?, ?, ?)",
 			product.Name,
 			product.IsAvailable,
 			product.BarCode,
