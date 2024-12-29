@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/Hexagon-Dev/go-crud/common"
 	"github.com/Hexagon-Dev/go-crud/controllers"
 	"log"
@@ -17,16 +18,22 @@ type Route struct {
 
 func main() {
 	db, err := sql.Open("sqlite", "go.sqlite")
-
-	defer db.Close()
-
 	if err != nil {
 		log.Panicln(err)
 	}
 
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			fmt.Println("Failed to close database connection.")
+		}
+	}(db)
+
 	routes := []Route{
 		{"GET /product/{id}", controllers.GetProduct(db)},
 		{"POST /product", controllers.CreateProduct(db)},
+		{"PUT /product/{id}", controllers.UpdateProduct(db)},
+		{"DELETE /product/{id}", controllers.DeleteProduct(db)},
 	}
 
 	for _, route := range routes {

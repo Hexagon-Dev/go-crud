@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/Hexagon-Dev/go-crud/common"
 	"net/http"
+	"strconv"
 )
 
 type Product struct {
@@ -66,5 +67,61 @@ func CreateProduct(db *sql.DB) func(w http.ResponseWriter, r *http.Request) any 
 		product.Id = int(id)
 
 		return product
+	}
+}
+
+func UpdateProduct(db *sql.DB) func(w http.ResponseWriter, r *http.Request) any {
+	return func(w http.ResponseWriter, r *http.Request) any {
+		id, err := strconv.Atoi(r.PathValue("id"))
+		if err != nil {
+			return common.HttpError{Message: err.Error(), StatusCode: http.StatusUnprocessableEntity}
+		}
+
+		var product Product
+
+		if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
+			return common.HttpError{Message: err.Error(), StatusCode: http.StatusInternalServerError}
+		}
+
+		_, err = db.Exec(
+			"UPDATE products SET name = ?, is_available = ?, bar_code = ?, category = ?, created_at = ? WHERE id = ?",
+			product.Name,
+			product.IsAvailable,
+			product.BarCode,
+			product.Category,
+			product.CreatedAt,
+			id,
+		)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return common.HttpError{Message: err.Error(), StatusCode: http.StatusNotFound}
+			} else {
+				return common.HttpError{Message: err.Error(), StatusCode: http.StatusInternalServerError}
+			}
+		}
+
+		product.Id = id
+
+		return product
+	}
+}
+
+func DeleteProduct(db *sql.DB) func(w http.ResponseWriter, r *http.Request) any {
+	return func(w http.ResponseWriter, r *http.Request) any {
+		exec, err := db.Exec("DELETE FROM products WHERE id = ?", r.PathValue("id"))
+		if err != nil {
+			return common.HttpError{Message: err.Error(), StatusCode: http.StatusInternalServerError}
+		}
+
+		rowsAffected, err := exec.RowsAffected()
+		if err != nil {
+			return common.HttpError{Message: err.Error(), StatusCode: http.StatusInternalServerError}
+		}
+
+		if rowsAffected < 1 {
+			return common.HttpError{Message: "Product not found.", StatusCode: http.StatusNotFound}
+		}
+
+		return nil
 	}
 }
