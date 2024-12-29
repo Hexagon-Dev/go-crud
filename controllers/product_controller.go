@@ -18,6 +18,30 @@ type Product struct {
 	CreatedAt   string `json:"created_at"`
 }
 
+func IndexProduct(db *sql.DB) func(w http.ResponseWriter, r *http.Request) any {
+	return func(w http.ResponseWriter, r *http.Request) any {
+		rows, err := db.Query("SELECT * FROM products")
+		if err != nil {
+			return common.HttpError{Message: err.Error(), StatusCode: http.StatusInternalServerError}
+		}
+
+		var products []Product
+
+		for rows.Next() {
+			var product Product
+
+			err := rows.Scan(&product.Id, &product.Name, &product.IsAvailable, &product.BarCode, &product.Category, &product.CreatedAt)
+			if err != nil {
+				return common.HttpError{Message: err.Error(), StatusCode: http.StatusInternalServerError}
+			}
+
+			products = append(products, product)
+		}
+
+		return products
+	}
+}
+
 func GetProduct(db *sql.DB) func(w http.ResponseWriter, r *http.Request) any {
 	return func(w http.ResponseWriter, r *http.Request) any {
 		id := r.PathValue("id")

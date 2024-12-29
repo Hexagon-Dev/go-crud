@@ -30,6 +30,7 @@ func main() {
 	}(db)
 
 	routes := []Route{
+		{"GET /product", controllers.IndexProduct(db)},
 		{"GET /product/{id}", controllers.GetProduct(db)},
 		{"POST /product", controllers.CreateProduct(db)},
 		{"PUT /product/{id}", controllers.UpdateProduct(db)},
